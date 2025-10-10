@@ -1,0 +1,31 @@
+DROP PROCEDURE IF EXISTS USP_GET_StudentDetails;
+
+go
+CREATE PROCEDURE USP_GET_StudentDetails
+(
+@InstitutionID INT,	
+@CampusID INT,	
+@AcademicYearID INT,
+@ClassID INT=NULL
+)
+AS 
+BEGIN
+
+SET @ClassID= CASE WHEN @ClassID = 0 THEN NULL ELSE @ClassID END
+
+SELECT S.StudentID,S.StudentFullName,B.BoardingType,SG.SegmentName,S.EnquiryNo,S.ApplicationNo,S.RegistrationNo,S.AdmissionNo,
+S.StudentCode,S.FirstName,S.MiddleName,S.LastName,S.InstitutionID,S.CampusID,S.AdmAcademicYearID,S.Gender,S.DOB,S.DOA,S.StudentMobileNo,S.AdharNo ,
+		 ISNULL(P.ParentName, '') AS FatherName,
+C.ClassID,C.ClassName
+FROM StudentDetails S WITH(NOLOCK)
+INNER JOIN StudentClassDetails S1 WITH(NOLOCK) ON S1.StudentID=S.StudentID
+LEFT JOIN StudentSegments SG WITH(NOLOCK) ON SG.StudentSegmentID =S.StudentSegmentID
+LEFT JOIN BoardingTypes B WITH(NOLOCK) ON B.BoardingTypeID=S.BoardingTypeID
+ LEFT JOIN StudentParentDetails P WITH (NOLOCK)
+        ON P.StudentID = S.StudentID AND P.ParentRelation = 'Father'
+
+INNER JOIN Classes C WITH(NOLOCK) ON C.ClassID =S1.GradeID
+WHERE S.InstitutionID=@InstitutionID AND S.CampusID=@CampusID AND S.AdmAcademicYearID=@AcademicYearID
+ AND S1.GradeID=ISNULL(@ClassID,S1.GradeID)
+
+END
