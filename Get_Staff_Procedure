@@ -1,0 +1,48 @@
+DROP PROCEDURE IF EXISTS [dbo].[USP_GET_StaffDetails];
+GO
+
+CREATE PROCEDURE [dbo].[USP_GET_StaffDetails]
+(
+    @InstitutionID INT,
+    @CampusID INT = NULL,
+    @StaffRoleID INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SET @CampusID = CASE WHEN @CampusID = 0 THEN NULL ELSE @CampusID END;
+    SET @StaffRoleID = CASE WHEN @StaffRoleID = 0 THEN NULL ELSE @StaffRoleID END;
+
+    SELECT 
+        S.StaffID,
+        S.StaffCode,
+        S.InstitutionID,
+        U.RoleName AS UserRole,
+        R.RoleName AS StaffRoleName,
+        S.StaffGUID,
+        S.StaffReferenceCode,
+        S.FirstName,
+        S.MiddleName,
+        S.LastName,
+        S.FullName,
+        S.Gender,
+        S.DOB,
+        S.CountryCode,
+        S.MobileNo,
+        S.EmailID,
+        S.Qualification,
+        S.NoOfYearsExperience,
+        SC.CampusID,
+        C.CampuseName,
+        S.Address
+    FROM StaffDetails S WITH (NOLOCK)
+    INNER JOIN UserRoles U WITH (NOLOCK) ON U.UserRoleID = S.UserRoleID
+    INNER JOIN StaffRoles R WITH (NOLOCK) ON R.StaffRoleID = S.StaffRoleID
+    LEFT JOIN StaffToCampuses SC WITH (NOLOCK) ON SC.StaffID = S.StaffID AND SC.IsAssign = 1
+    LEFT JOIN Campuses C WITH (NOLOCK) ON C.CampusID = SC.CampusID
+    WHERE S.InstitutionID = @InstitutionID
+      AND (@CampusID IS NULL OR SC.CampusID = @CampusID)
+      AND (@StaffRoleID IS NULL OR S.StaffRoleID = @StaffRoleID);
+END
+GO
