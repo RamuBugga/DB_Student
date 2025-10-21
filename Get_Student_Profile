@@ -18,55 +18,59 @@ BEGIN
         S.Gender,
         S.DOB,
         S.AdharNo,
-        S.CreatedDate,
         S.APARNo,
-		    ISNULL(S.StatusID, 0) AS StatusID, 
+        S.StatusID,
         S.StudentSegmentID,
-		    ISNULL(SEG.SegmentName,'') AS SegmentName, 
+        SEG.SegmentName,
+
         -- Address
-        ISNULL(A.StudentParentDetailID, 0) AS StudentParentDetailID,
-        ISNULL(A.CountryID, 0) AS CountryID,
-        ISNULL(CO.CountryName, '') AS CountryName,
-        ISNULL(A.StateID, 0) AS StateID,
-        ISNULL(ST.StateName, '') AS StateName,
-        ISNULL(A.CityID, 0) AS CityID,
-        ISNULL(CT.CityName, '') AS CityName,
-        ISNULL(A.HouseNo, '') AS HouseNo,
-        ISNULL(A.StreetName, '') AS StreetName,
-        ISNULL(A.Locality, '') AS Locality,
-        ISNULL(A.PinCode, '') AS PinCode,
+        A.StudentParentDetailID,
+        A.HouseNo,
+        A.StreetName,
+        A.Locality,
+        A.PinCode,
+        A.CityID,
+        CT.CityName,
+        A.StateID,
+        ST.StateName,
+        A.CountryID,
+        CO.CountryName,
 
         -- Class
-        ISNULL(SC.StudentClassDetailID, 0) AS StudentClassDetailID,
-        ISNULL(SC.GradeID, 0) AS GradeID,
-        ISNULL(CLS.ClassName, '') AS ClassName,
-        ISNULL(SC.ClassRoomID, 0) AS ClassRoomID,
-        ISNULL(CR.ClassRoomName, '') AS ClassRoomName,
+        SC.StudentClassDetailID,
+        SC.GradeID,
+        CLS.ClassName,
+        SC.ClassRoomID,
+        CR.ClassRoomName,
 
-        -- ParentDetails as JSON
+        S.CreatedDate,
+
+        -- Parent Details as JSON
         (
             SELECT 
                 P.StudentParentDetailID,
                 P.StudentID,
-                ISNULL(P.ParentName,'') AS ParentName,
-                ISNULL(P.ParentRelation,'') AS ParentRelation,
-                ISNULL(P.MobileNo,'') AS MobileNo,
-                ISNULL(P.EmailID,'') AS EmailID
+                P.ParentName,
+                P.ParentRelation,
+                P.MobileNo,
+                P.EmailID
             FROM StudentParentDetails P
             WHERE P.StudentID = S.StudentID
             FOR JSON PATH
         ) AS ParentsJson
 
     FROM StudentDetails S
-    LEFT JOIN StudentAddressDetails A ON S.StudentID = A.StudentID
-	LEFT JOIN StudentSegments SEG ON S.StudentSegmentID = SEG.StudentSegmentID
+    LEFT JOIN StudentSegments SEG ON S.StudentSegmentID = SEG.StudentSegmentID
 
+    LEFT JOIN StudentAddressDetails A ON S.StudentID = A.StudentID
     LEFT JOIN Countries CO ON A.CountryID = CO.CountryID
     LEFT JOIN States ST ON A.StateID = ST.StateID
     LEFT JOIN Cities CT ON A.CityID = CT.CityID
+
     LEFT JOIN StudentClassDetails SC ON S.StudentID = SC.StudentID
     LEFT JOIN Classes CLS ON SC.GradeID = CLS.ClassID
     LEFT JOIN ClassRooms CR ON SC.ClassRoomID = CR.ClassRoomID
+
     WHERE S.StudentID = @StudentID;
 END
 GO
