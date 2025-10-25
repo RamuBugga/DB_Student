@@ -1,0 +1,43 @@
+USE [GRR_SchoolDB]
+GO
+/*  StoredProcedure [dbo].[USP_GET_StaffProfile]   
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[USP_GET_StaffProfile]
+(
+    @StaffID INT,
+    @InstitutionID INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        S.StaffID,
+        ISNULL(S.StaffCode, '') AS StaffCode,
+        S.InstitutionID,
+        ISNULL(S.FirstName, '') AS FirstName,
+        ISNULL(S.MiddleName, '') AS MiddleName,
+        ISNULL(S.LastName, '') AS LastName,
+        ISNULL(S.FullName, '') AS FullName,
+        ISNULL(S.Gender, 0) AS Gender,
+        ISNULL(R.RoleName, '') AS StaffRoleName,
+        ISNULL(U.RoleName, '') AS UserRole,
+        ISNULL(CAST(SC.CampusID AS INT), 0) AS CampusID,
+        ISNULL(C.CampuseName, '') AS CampuseName,
+        ISNULL(S.DOB, GETDATE()) AS DOB,
+        ISNULL(S.MobileNo, '') AS MobileNo,
+        ISNULL(S.EmailID, '') AS EmailID,
+        ISNULL(S.Qualification, '') AS Qualification,
+        ISNULL(S.NoOfYearsExperience, 0) AS NoOfYearsExperience, 
+        ISNULL(S.Address, '') AS Address
+    FROM StaffDetails S
+    INNER JOIN StaffRoles R ON R.StaffRoleID = S.StaffRoleID
+    INNER JOIN UserRoles U ON U.UserRoleID = S.UserRoleID
+    LEFT JOIN StaffToCampuses SC ON SC.StaffID = S.StaffID AND SC.IsAssign = 1
+    LEFT JOIN Campuses C ON C.CampusID = SC.CampusID
+    WHERE S.InstitutionID = @InstitutionID
+      AND S.StaffID = @StaffID;
+END
