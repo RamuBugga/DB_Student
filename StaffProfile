@@ -1,11 +1,5 @@
-USE [GRR_SchoolDB]
-GO
-/*  StoredProcedure [dbo].[USP_GET_StaffProfile]   
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[USP_GET_StaffProfile]
+  
+Create PROCEDURE [dbo].[USP_GET_StaffProfile]
 (
     @StaffID INT,
     @InstitutionID INT
