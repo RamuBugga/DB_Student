@@ -5,14 +5,14 @@ CREATE PROCEDURE [dbo].[USP_GET_StaffDetails]
 (
     @InstitutionID INT,
     @CampusID INT = NULL,
-    @StaffRoleID INT = NULL
+    @UserRoleID INT = NULL
 )
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SET @CampusID = CASE WHEN @CampusID = 0 THEN NULL ELSE @CampusID END;
-    SET @StaffRoleID = CASE WHEN @StaffRoleID = 0 THEN NULL ELSE @StaffRoleID END;
+    SET @UserRoleID = CASE WHEN @UserRoleID = 0 THEN NULL ELSE @UserRoleID END;
 
     SELECT 
         S.StaffID,
@@ -43,6 +43,6 @@ BEGIN
     LEFT JOIN Campuses C WITH (NOLOCK) ON C.CampusID = SC.CampusID
     WHERE S.InstitutionID = @InstitutionID
       AND (@CampusID IS NULL OR SC.CampusID = @CampusID)
-      AND (@StaffRoleID IS NULL OR S.StaffRoleID = @StaffRoleID);
+      AND (@UserRoleID IS NULL OR S.UserRoleID = @UserRoleID);
 END
 GO
