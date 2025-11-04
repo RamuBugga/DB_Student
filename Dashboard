@@ -1,0 +1,27 @@
+IF OBJECT_ID('USP_DB_CampusesList', 'P') IS NOT NULL
+    DROP PROCEDURE USP_DB_CampusesList;
+GO
+CREATE PROCEDURE USP_DB_CampusesList
+(
+@InstitutionID INT,
+@CampuseID INT = NULL,
+@AcademicYearID INT = NULL
+)
+AS
+BEGIN
+
+SELECT DISTINCT Z.ZoneID,Z.ZoneName,C.CampusID,C.CampuseName,C.Address,C.AffiliationNo,C.CGUID,
+C1.ClassCount,C2.ClassRoomCount,s1.StuCount,S2.StaffCount,S1.BoyCount,S1.GirlsCount
+FROM dbo.Campuses C
+INNER JOIN dbo.Zones Z ON Z.ZoneID=C.ZoneID
+OUTER APPLY(SELECT COUNT(S.ClassID) AS ClassCount FROM DBO.Classes S WHERE S.CampusID=C.CampusID) AS C1
+OUTER APPLY(SELECT COUNT(S.ClassRoomID) AS ClassRoomCount FROM DBO.ClassRooms S WHERE S.CampusID=C.CampusID) AS C2
+OUTER APPLY(SELECT COUNT(S.StudentID) AS StuCount, BoyCount=COUNT(CASE WHEN S.Gender=1 THEN S.StudentID END),
+            GirlsCount=COUNT(CASE WHEN S.Gender=0 THEN S.StudentID END)
+           FROM DBO.StudentDetails S WHERE S.CampusID=C.CampusID) AS S1
+OUTER APPLY(SELECT COUNT(S.StaffID) AS StaffCount FROM DBO.StaffDetails S 
+            INNER JOIN DBO.StaffToCampuses SC on SC.StaffID=S.StaffID
+            WHERE S.InstitutionID=@InstitutionID AND SC.CampusID=C.CampusID) AS S2
+WHERE C.InstitutionID=@InstitutionID
+
+END
