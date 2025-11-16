@@ -1,5 +1,10 @@
-  
-Create PROCEDURE [dbo].[USP_GET_StaffProfile]
+USE [GRR_SchoolDB]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[USP_GET_StaffProfile]
 (
     @StaffID INT,
     @InstitutionID INT
@@ -28,7 +33,7 @@ BEGIN
         ISNULL(S.NoOfYearsExperience, 0) AS NoOfYearsExperience, 
         ISNULL(S.Address, '') AS Address
     FROM StaffDetails S
-    INNER JOIN StaffRoles R ON R.StaffRoleID = S.StaffRoleID
+    INNER JOIN StaffRoles R ON R.StaffRoleID = S.StaffRoleID   AND R.OrganisationID = S.InstitutionID
     INNER JOIN UserRoles U ON U.UserRoleID = S.UserRoleID
     LEFT JOIN StaffToCampuses SC ON SC.StaffID = S.StaffID AND SC.IsAssign = 1
     LEFT JOIN Campuses C ON C.CampusID = SC.CampusID
