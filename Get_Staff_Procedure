@@ -1,7 +1,11 @@
-DROP PROCEDURE IF EXISTS [dbo].[USP_GET_StaffDetails];
+USE [GRR_SchoolDB]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[USP_GET_StaffDetails]
+ALTER PROCEDURE [dbo].[USP_GET_StaffDetails]
 (
     @InstitutionID INT,
     @UserRoleID INT,
@@ -36,8 +40,9 @@ BEGIN
     FROM StaffDetails S WITH (NOLOCK)
     INNER JOIN UserRoles U WITH (NOLOCK) 
         ON U.UserRoleID = S.UserRoleID
-    INNER JOIN StaffRoles R WITH (NOLOCK) 
+   INNER JOIN StaffRoles R WITH (NOLOCK) 
         ON R.StaffRoleID = S.StaffRoleID
+       AND (R. OrganisationID = S.InstitutionID OR R. OrganisationID = @InstitutionID)
     LEFT JOIN StaffToCampuses SC WITH (NOLOCK) 
         ON SC.StaffID = S.StaffID AND SC.IsAssign = 1
     LEFT JOIN Campuses C WITH (NOLOCK) 
@@ -49,4 +54,3 @@ BEGIN
     ORDER BY 
         S.FullName;
 END;
-GO
