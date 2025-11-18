@@ -24,49 +24,34 @@ BEGIN
         SET @IsOld = 1;
 
     ------------------------------------------------------
-    -- FIX DUPLICATES: SELECT ONLY 1 RECORD PER CLASS
+    -- ALWAYS RETURN CLASS LIST + MATCHED FEESTRUCTURE
     ------------------------------------------------------
-    ;WITH Fee AS 
-    (
-        SELECT 
-            FS.FeeStructureID,
-            FS.ClassID,
-            FS.Amount,
-            FS.NoOfInstallments,
-            FS.FeeTypeID,
-            FS.StudentSegmentID,
-            FS.IsNewStudents,
-            FS.IsOldStudents,
-            ROW_NUMBER() OVER (PARTITION BY FS.ClassID ORDER BY FS.FeeStructureID DESC) AS RN
-        FROM FeeStructure FS
-        WHERE 
-            FS.InstitutionID = @InstitutionID
-            AND FS.CampusID = @CampusID
-            AND FS.AcademicYearID = @AcademicYearID
-            AND FS.FeeTypeID = @FeeTypeID
-            AND ( @SegmentID = 0 OR FS.StudentSegmentID = @SegmentID )
-            AND FS.IsActive = 1
-            AND (
-                    (FS.IsNewStudents = @IsNew)
-                 OR (FS.IsOldStudents = @IsOld)
-                )
-    )
-
     SELECT 
         C.ClassID,
         C.ClassName,
 
-        -- Selected Fee Row
-        F.FeeStructureID,
-        F.Amount,
-        F.NoOfInstallments,
-        F.FeeTypeID,
-        F.StudentSegmentID,
-        F.IsNewStudents,
-        F.IsOldStudents
+        -- FeeStructure Columns (NULL if not available)
+        FS.FeeStructureID,
+        FS.Amount,
+        FS.NoOfInstallments,
+        FS.FeeTypeID,
+        FS.StudentSegmentID,
+        FS.IsNewStudents,
+        FS.IsOldStudents
 
     FROM Classes C
-    LEFT JOIN Fee F ON F.ClassID = C.ClassID AND F.RN = 1  -- ✔ Only 1 row per class
+    LEFT JOIN FeeStructure FS 
+        ON FS.ClassID = C.ClassID
+        AND FS.InstitutionID = @InstitutionID
+        AND FS.CampusID = @CampusID
+        AND FS.AcademicYearID = @AcademicYearID
+        AND FS.FeeTypeID = @FeeTypeID
+        AND ( @SegmentID = 0 OR FS.StudentSegmentID = @SegmentID )
+        AND FS.IsActive = 1
+        AND (
+                (FS.IsNewStudents = @IsNew)
+             OR (FS.IsOldStudents = @IsOld)
+            )
 
     WHERE 
         C.InstitutionID = @InstitutionID
