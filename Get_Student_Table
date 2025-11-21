@@ -21,7 +21,6 @@ BEGIN
         S.FirstName,
         S.MiddleName,
         S.LastName,
-        S.StudentFullName,
         S.Gender,
         S.DOB,
         S.DOA AS AdmissionDate,
