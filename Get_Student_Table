@@ -1,0 +1,80 @@
+CREATE OR ALTER PROCEDURE USP_GET_StudentDetails
+(
+    @InstitutionID INT,
+    @CampusID INT,
+    @AcademicYearID INT,
+    @ClassID INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @ClassID = 0 SET @ClassID = NULL;
+
+    SELECT
+        S.StudentID,
+        S.EnquiryNo,
+        S.ApplicationNo,
+        S.AdmissionNo,
+        S.RegistrationNo,
+        S.StudentCode,
+        S.FirstName,
+        S.MiddleName,
+        S.LastName,
+        S.StudentFullName,
+        S.Gender,
+        S.DOB,
+        S.DOA AS AdmissionDate,
+		S.CreatedDate as EnquriyDate,
+        CT.ClassID,
+        ISNULL(CT.ClassName, '') AS ClassName,
+
+        S1.ClassRoomID,
+        ISNULL(CR.ClassRoomName, '') AS ClassRoomName,
+
+        -- Parent (Father as primary)
+        ISNULL(P.ParentName, '') AS Parent1Name,
+        ISNULL(P.MobileNo, '') AS Parent1MobileNo,
+        ISNULL(P.EmailID, '') AS Parent1Email
+
+    FROM StudentDetails S
+    INNER JOIN StudentClassDetails S1 ON S1.StudentID = S.StudentID
+        AND S1.IsActive = 1  -- Important: only active class assignments
+
+    -- Fix 1: Use correct table name ClassT
+    INNER JOIN Classes CT ON CT.ClassID = S1.GradeID
+        AND CT.InstitutionID = @InstitutionID
+        AND CT.CampusID = @CampusID
+
+    -- Fix 2: Use correct table name ClassRoom (singular)
+    LEFT JOIN ClassRooms CR ON CR.ClassRoomID = S1.ClassRoomID
+        AND CR.AcademicYearID = @AcademicYearID
+        AND CR.InstitutionID = @InstitutionID
+        AND CR.CampusID = @CampusID
+
+    -- Parent: Father as primary contact
+     OUTER APPLY
+    (
+        SELECT TOP 1 
+            ParentName, MobileNo, EmailID
+        FROM StudentParentDetails SPD
+        WHERE SPD.StudentID = S.StudentID
+        ORDER BY 
+            CASE 
+                WHEN SPD.ParentRelation = 'Father' THEN 1
+                WHEN SPD.ParentRelation = 'Mother' THEN 2
+                ELSE 3
+            END,
+            SPD.StudentParentDetailID DESC
+    ) P
+
+    WHERE
+        S.InstitutionID = @InstitutionID
+        AND S.CampusID = @CampusID
+        AND S.AdmAcademicYearID = @AcademicYearID
+        AND S.IsActive = 1
+        AND (@ClassID IS NULL OR S1.GradeID = @ClassID)
+
+    ORDER BY S.StudentID DESC;
+END
+GO
