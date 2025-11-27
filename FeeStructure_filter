@@ -4,7 +4,7 @@ CREATE OR ALTER PROCEDURE USP_Get_FeeStructure_Filter
     @CampusID          INT,
     @AcademicYearID    INT,
     @ClassStageID      INT,
-    @SegmentID         INT = 0,        -- 0 = ALL segments
+    @SegmentID         INT = 0,        -- 0 or NULL = ALL segments
     @FeeTypeID         INT,
     @StudentType       VARCHAR(10)     -- 'New', 'Old', 'All'
 )
@@ -13,7 +13,7 @@ BEGIN
     SET NOCOUNT ON;
 
     ------------------------------------------------------
-    -- Convert StudentType
+    -- Convert StudentType to Flags
     ------------------------------------------------------
     DECLARE @IsNew BIT = 0, @IsOld BIT = 0;
 
@@ -24,13 +24,18 @@ BEGIN
         SET @IsOld = 1;
 
     ------------------------------------------------------
-    -- ALWAYS RETURN CLASS LIST + MATCHED FEESTRUCTURE
+    -- Clean SegmentID (NULL or 0 = ALL)
+    ------------------------------------------------------
+    SET @SegmentID = ISNULL(@SegmentID, 0);
+
+    ------------------------------------------------------
+    -- ALWAYS RETURN CLASS LIST + EXISTING FEESTRUCTURE
     ------------------------------------------------------
     SELECT 
         C.ClassID,
         C.ClassName,
 
-        -- FeeStructure Columns (NULL if not available)
+        -- Existing FeeStructure (NULL if not present)
         FS.FeeStructureID,
         FS.Amount,
         FS.NoOfInstallments,
@@ -40,24 +45,35 @@ BEGIN
         FS.IsOldStudents
 
     FROM Classes C
+
     LEFT JOIN FeeStructure FS 
         ON FS.ClassID = C.ClassID
         AND FS.InstitutionID = @InstitutionID
         AND FS.CampusID = @CampusID
         AND FS.AcademicYearID = @AcademicYearID
         AND FS.FeeTypeID = @FeeTypeID
-        AND ( @SegmentID = 0 OR FS.StudentSegmentID = @SegmentID )
         AND FS.IsActive = 1
+        
         AND (
-                (FS.IsNewStudents = @IsNew)
-             OR (FS.IsOldStudents = @IsOld)
+                @SegmentID = 0
+             OR FS.StudentSegmentID = @SegmentID
+            )
+
+        AND (
+                (FS.IsNewStudents = 1 AND @IsNew = 1)
+             OR (FS.IsOldStudents = 1 AND @IsOld = 1)
             )
 
     WHERE 
         C.InstitutionID = @InstitutionID
         AND C.CampusID = @CampusID
-        AND C.ClassStageID = @ClassStageID
+
+        -- Stage filter (0 = ALL)
+        AND ( @ClassStageID = 0 OR C.ClassStageID = @ClassStageID )
+
         AND C.Status = 1
 
-    ORDER BY C.ClassName;
+    ORDER BY C.SequenceNo, C.ClassName;
+
 END
+GO
